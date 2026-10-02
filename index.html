@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidaturas pela Justiça Climática, Social e Democrática</title>
+    <style>
+        :root {
+            --primary-color: #2c7a7b; /* Verde-azulado */
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filters input, .filters select {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            border-top: 4px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+        .tag {
+            display: inline-block;
+            background: #e6fffa;
+            color: #234e52;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        .details p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .links {
+            margin-top: auto;
+            padding-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .links a {
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+        .links a:hover {
+            background: #234e52;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Candidaturas pela Justiça Climática, Social e Democrática</h1>
+    <p>Conheça e apoie os candidatos comprometidos nestas eleições de 2026</p>
+</header>
+
+<div class="container">
+    <div class="filters">
+        <input type="text" id="searchName" placeholder="Buscar por nome..." onkeyup="filterCards()">
+        <select id="filterState" onchange="filterCards()">
+            <option value="">Todos os Estados</option>
+        </select>
+        <select id="filterRole" onchange="filterCards()">
+            <option value="">Todos os Cargos</option>
+        </select>
+    </div>
+
+    <div class="grid" id="candidatesGrid">
+        <!-- Cards serão injetados via JavaScript -->
+    </div>
+</div>
+
+<script>
+    let candidatesData = [];
+
+    // Carregar JSON
+    fetch('candidatos.json')
+        .then(response => response.json())
+        .then(data => {
+            candidatesData = data;
+            populateFilters(data);
+            renderCards(data);
+        });
+
+    function populateFilters(data) {
+        const states = [...new Set(data.map(item => item.estado).filter(Boolean))].sort();
+        const roles = [...new Set(data.map(item => item.cargo).filter(Boolean))].sort();
+
+        const stateSelect = document.getElementById('filterState');
+        const roleSelect = document.getElementById('filterRole');
+
+        states.forEach(state => {
+            const option = document.createElement('option');
+            option.value = state;
+            option.textContent = state;
+            stateSelect.appendChild(option);
+        });
+
+        roles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role;
+            option.textContent = role;
+            roleSelect.appendChild(option);
+        });
+    }
+
+    function renderCards(data) {
+        const grid = document.getElementById('candidatesGrid');
+        grid.innerHTML = ''; // Limpar grid
+
+        if(data.length === 0) {
+            grid.innerHTML = '<p>Nenhum candidato encontrado.</p>';
+            return;
+        }
+
+        data.forEach(candidato => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // Format Social Media Links (if any)
+            let linksHtml = '';
+            if(candidato.site) linksHtml += `<a href="${candidato.site}" target="_blank">Site Oficial</a>`;
+            if(candidato.whatsapp) linksHtml += `<a href="https://wa.me/55${candidato.whatsapp.toString().replace(/\D/g,'')}" target="_blank">WhatsApp</a>`;
+
+            card.innerHTML = `
+                <h2>${candidato.nome || 'Sem Nome Registrado'}</h2>
+                <div>
+                    <span class="tag">${candidato.cargo || 'Cargo não informado'}</span>
+                    <span class="tag" style="background:#ebf8ff; color:#2b6cb0;">${candidato.estado || 'Estado não informado'}</span>
+                </div>
+                <div class="details">
+                    <p><strong>Número:</strong> ${candidato.numero || 'N/A'}</p>
+                    <p><strong>Partido:</strong> ${candidato.partido || 'N/A'}</p>
+                    ${candidato.federacao && candidato.federacao !== "Não pertence a uma federação partidária" ? `<p><strong>Federação:</strong> ${candidato.federacao}</p>` : ''}
+                </div>
+                <div class="links">
+                    ${linksHtml}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function filterCards() {
+        const nameQuery = document.getElementById('searchName').value.toLowerCase();
+        const stateQuery = document.getElementById('filterState').value;
+        const roleQuery = document.getElementById('filterRole').value;
+
+        const filtered = candidatesData.filter(c => {
+            const matchesName = c.nome.toLowerCase().includes(nameQuery);
+            const matchesState = stateQuery === "" || c.estado === stateQuery;
+            const matchesRole = roleQuery === "" || c.cargo === roleQuery;
+            return matchesName && matchesState && matchesRole;
+        });
+
+        renderCards(filtered);
+    }
+</script>
+
+</body>
+</html>
